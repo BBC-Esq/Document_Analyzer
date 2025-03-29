@@ -4,7 +4,7 @@ from utils.logging_config import setup_logger
 
 logger = setup_logger(__name__)
 
-def split_text(text: str, chunk_size: int = 4000, overlap: int = 200) -> List[str]:
+def split_text(text: str, chunk_size: int = 10000, overlap: int = 1000) -> List[str]:
     """
     Split text into overlapping chunks based on character count.
 
