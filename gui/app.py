@@ -11,11 +11,13 @@ from gui.panels.search_panel import SearchPanel
 from gui.panels.action_panel import ActionPanel
 from gui.panels.progress_panel import ProgressPanel
 from gui.panels.results_panel import ResultsPanel
+from gui.panels.llm_query_panel import LlmQueryPanel
 
 from core.reporting.basic import create_report
 from core.document.factory import DocumentProcessorFactory
 from workers.document_workers import PdfExtractWorker
 from workers.analysis_workers import TextAnalyzeWorker
+from workers.ai_workers import LlmQueryWorker
 from utils.logging_config import setup_logger
 
 logger = setup_logger(__name__)
@@ -44,9 +46,15 @@ class DocumentProcessorApp(QMainWindow):
     def init_ui(self):
         # Create main layout
         main_widget = QWidget()
-        main_layout = QHBoxLayout(main_widget)
+        main_layout = QVBoxLayout(main_widget)
+
+        # Create top section with splitter
+        top_widget = QWidget()
+        top_layout = QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        
         splitter = QSplitter(Qt.Horizontal)
-        main_layout.addWidget(splitter)
+        top_layout.addWidget(splitter)
 
         # Initialize panels
         self.file_browser = FileBrowserPanel()
@@ -68,7 +76,6 @@ class DocumentProcessorApp(QMainWindow):
         self.action_panel.report_clicked.connect(self.generate_report)
 
         self.progress_panel = ProgressPanel()
-
         self.results_panel = ResultsPanel()
 
         # Add panels to right layout
@@ -82,6 +89,15 @@ class DocumentProcessorApp(QMainWindow):
         splitter.addWidget(self.file_browser)
         splitter.addWidget(right_panel)
         splitter.setSizes([300, 600])
+
+        self.llm_query_panel = LlmQueryPanel()
+        self.llm_query_panel.query_clicked.connect(self.query_llm)
+
+        main_layout.addWidget(top_widget)
+        main_layout.addWidget(self.llm_query_panel)
+
+        main_layout.setStretch(0, 10)  # Top section gets 4/5 of space
+        main_layout.setStretch(1, 1)  # Bottom panel gets 1/5 of space
 
         self.setCentralWidget(main_widget)
         logger.debug("UI initialized")
@@ -171,6 +187,45 @@ class DocumentProcessorApp(QMainWindow):
             self.update_status(f"Error: {str(e)}")
             self.progress_panel.set_progress(0)
             logger.error(f"Error during analysis: {str(e)}")
+
+    def query_llm(self, question):
+        if not self.selected_txt_file:
+            QMessageBox.critical(self, "Error", "Please select a text file to analyze")
+            logger.warning("No text file selected for LLM query")
+            return
+
+        try:
+            file_path = self.selected_txt_path
+            if not os.path.exists(file_path):
+                QMessageBox.critical(self, "Error", f"File not found: {file_path}")
+                logger.error(f"File not found: {file_path}")
+                return
+
+            self.progress_panel.set_progress(0, 0)
+            self.update_status(f"Querying LLM about {self.selected_txt_file}...")
+            self.results_panel.clear_results()
+            
+            logger.info(f"Starting LLM query for {file_path} with question '{question}'")
+            self.llm_worker = LlmQueryWorker(file_path, question)
+            self.llm_worker.signals.finished.connect(self.complete_llm_query)
+            self.llm_worker.start()
+
+        except Exception as e:
+            self.update_status(f"Error: {str(e)}")
+            self.progress_panel.set_progress(0)
+            logger.error(f"Error during LLM query: {str(e)}")
+
+    def complete_llm_query(self, success, message):
+        self.progress_panel.set_progress(100 if success else 0)
+
+        self.update_status("LLM query complete" if success else "LLM query failed")
+        self.results_panel.set_results(message)
+
+        if not success:
+            QMessageBox.critical(self, "Error", message)
+            logger.error(f"LLM query failed: {message}")
+        else:
+            logger.info("LLM query completed successfully")
 
     def complete_analysis(self, success, message):
         self.progress_panel.set_progress(100 if success else 0)
