@@ -208,13 +208,12 @@ class DocumentProcessorApp(QMainWindow):
 
     def complete_extraction(self, success, message):
         self.progress_panel.set_progress(100 if success else 0)
-        
+
         self.update_status(message)
         self.results_panel.set_results(message)
 
-        if success:
-            QMessageBox.information(self, "Success", message)
-            logger.info("PDF extraction completed successfully")
-        else:
+        if not success:
             QMessageBox.critical(self, "Error", message)
             logger.error(f"PDF extraction failed: {message}")
+        else:
+            logger.info("PDF extraction completed successfully")
