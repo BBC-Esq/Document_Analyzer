@@ -9,7 +9,7 @@ logger = setup_logger(__name__)
 class LlmQueryWorker(BaseWorker):
     """Worker thread for querying LLM server with text chunks."""
     def __init__(self, file_path, question, server_url="http://127.0.0.1:1234/v1", 
-                 api_key="lm-studio", chunk_size=4000, overlap=200):
+                 api_key="lm-studio", chunk_size=10000, overlap=1000):
         super().__init__()
         self.file_path = file_path
         self.question = question
