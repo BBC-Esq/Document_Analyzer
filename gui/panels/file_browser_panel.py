@@ -8,6 +8,7 @@ class FileBrowserPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
+        self.setStyleSheet("border: 1px solid #00FF00;")  # Green border
         
     def setup_ui(self):
         layout = QVBoxLayout(self)

@@ -9,6 +9,7 @@ class DocumentSelectorPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
+        self.setStyleSheet("border: 1px solid #0000FF;")  # Blue border
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -24,15 +25,6 @@ class DocumentSelectorPanel(QWidget):
         file_layout.addWidget(browse_file_btn)
         layout.addLayout(file_layout)
         
-        # Optional: Add file type selector for future use
-        # type_layout = QHBoxLayout()
-        # type_layout.addWidget(QLabel("File Type:"))
-        # self.file_type_combo = QComboBox()
-        # self.file_type_combo.addItem("PDF")
-        # # Future types will be added here
-        # type_layout.addWidget(self.file_type_combo)
-        # layout.addLayout(type_layout)
-        
     def _on_browse_clicked(self):
         self.browse_clicked.emit()
         
@@ -42,7 +34,3 @@ class DocumentSelectorPanel(QWidget):
         
     def get_path(self):
         return self.document_path_edit.text()
-        
-    # For future use when you support multiple document types
-    # def get_selected_file_type(self):
-    #     return self.file_type_combo.currentText()
