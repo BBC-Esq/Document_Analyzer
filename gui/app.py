@@ -227,6 +227,27 @@ class DocumentProcessorApp(QMainWindow):
         else:
             logger.info("LLM query completed successfully")
 
+            try:
+                import tempfile
+                import os
+
+                logger.info("Creating temporary file with LLM query results")
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8') as tmp:
+                    tmp.write(f"LLM Query Results\n\n")
+                    tmp.write(f"Question: {self.llm_worker.question}\n\n")
+                    tmp.write(f"Document: {self.selected_txt_file}\n\n")
+                    tmp.write("Response:\n")
+                    tmp.write(message)
+
+                    tmp_path = tmp.name
+                    logger.debug(f"LLM results written to temporary file: {tmp_path}")
+
+                os.startfile(tmp_path)
+                logger.info("LLM results file opened with default application")
+
+            except Exception as e:
+                logger.error(f"Failed to create LLM results file: {str(e)}", exc_info=True)
+
     def complete_analysis(self, success, message):
         self.progress_panel.set_progress(100 if success else 0)
 
